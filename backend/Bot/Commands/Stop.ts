@@ -4,16 +4,14 @@ import {
     userConnectedToVC,
 } from '../Helpers/Bard.helpers';
 
-export function stop(instance, message, args) {
+export async function stop(instance, message, args) {
     const voiceChannel = message.member.voice.channel;
+    const player = instance.player;
 
     if (!userConnectedToVC(message, voiceChannel)) return;
 
     const guild = message.guild.id;
-    const serverQueue = getQueue(message, guild);
+    const serverQueue = await getQueue(message, player, guild);
 
-    if (serverQueue.playing || serverQueue.dispatcher) {
-        resetQueue(serverQueue);
-    }
-    message.channel.send('Playback stopped');
+    serverQueue.stop();
 }

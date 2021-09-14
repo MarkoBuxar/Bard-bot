@@ -1,0 +1,4 @@
+{  "scripts": {
+    "start-bard": "cd backend && yarn && yarn start"
+  }
+}
