@@ -2,6 +2,7 @@ import config from 'config';
 import { Intents } from 'discord.js';
 import dotenv from 'dotenv';
 import { Bard } from './Bot/Bard';
+import { ServerAPI } from './server/ServerAPI';
 
 // not playing random songs
 // https://github.com/Androz2091/discord-player/issues/764
@@ -22,3 +23,4 @@ options['intents'] = new Intents([
 ]);
 
 new Bard(token, config, options);
+new ServerAPI().start();
