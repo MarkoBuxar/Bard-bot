@@ -1,16 +1,14 @@
 import { getQueue, userConnectedToVC } from '../Helpers/Bard.helpers';
 
-export function pause(instance, message, args) {
+export async function pause(instance, message, args) {
     const voiceChannel = message.member.voice.channel;
+    const player = instance.player;
 
     if (!userConnectedToVC(message, voiceChannel)) return;
 
     const guild = message.guild.id;
-    const serverQueue = getQueue(message, guild);
+    const serverQueue = await getQueue(message, player, guild);
 
-    if (serverQueue.playing) {
-        serverQueue.dispatcher.pause();
-        serverQueue.playing = false;
-    }
-    message.channel.send('Playback paused');
+    serverQueue.setPaused(true);
+    player.emit('trackPaused', serverQueue);
 }

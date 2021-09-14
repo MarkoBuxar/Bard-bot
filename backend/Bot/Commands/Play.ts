@@ -1,79 +1,55 @@
-import ytdl from 'ytdl-core';
-import {
-    getQueue,
-    resetQueue,
-    userConnectedToVC,
-} from '../Helpers/Bard.helpers';
+import { QueryType } from 'discord-player';
+import { getQueue, userConnectedToVC } from '../Helpers/Bard.helpers';
 import { Queue, SongObject } from '../Types/Bard.types';
-import { resume } from './Resume';
 
 export async function play(instance, message, args) {
     try {
         const voiceChannel = message.member.voice.channel;
+        const player = instance.player;
 
         if (!userConnectedToVC(message, voiceChannel)) return;
 
-        const songName = args.join(' ');
-
+        const query = args.join(' ');
         const guild = message.guild.id;
-        let serverQueue = getQueue(message, guild);
 
-        if (!songName) {
-            if (serverQueue.dispatcher && !serverQueue.playing) {
-                resume(instance, message, serverQueue);
-            } else {
-                message.channel.send('You need to type in a song dumbass');
-            }
-            return;
-        }
+        let serverQueue = await getQueue(message, player, guild);
 
-        const song = await getSong(songName);
+        if (!query) return player.emit('missingQuery', serverQueue);
 
-        await addToQueue(serverQueue, song);
+        const song = await getSong(message, player, query);
 
-        if (serverQueue.dispatcher || serverQueue.playing) return;
+        if (!song || !song.tracks.length)
+            return player.emit('missingTrack', serverQueue);
 
-        var connection = await voiceChannel.join();
-        serverQueue.connection = connection;
+        await addToQueue(message, serverQueue, song);
 
-        playSong(serverQueue, song);
+        if (!serverQueue.playing) playQueue(serverQueue, voiceChannel);
+        return;
     } catch (err) {
         console.log(err);
     }
 }
 
-async function addToQueue(serverQueue, song): Promise<Queue> {
-    serverQueue.songs.push(song);
-    serverQueue.textChannel.send(
-        `\`${song.title}\` **has been added to the queue!**`
-    );
-    return serverQueue;
-}
-
-async function getSong(songName): Promise<SongObject> {
-    const songInfo = await ytdl.getInfo(songName);
-    const song = {
-        title: songInfo.videoDetails.title,
-        url: songInfo.videoDetails.video_url,
-    };
-
-    return song;
-}
-
-function playSong(serverQueue, song) {
-    if (!song) {
-        return resetQueue(serverQueue);
+async function addToQueue(message, queue, searchResult): Promise<void> {
+    if (searchResult.playlist) {
+        queue.addTracks(searchResult.tracks);
+    } else {
+        queue.addTrack(searchResult.tracks[0]);
     }
+}
 
-    const dispatcher = serverQueue.connection
-        .play(ytdl(song.url))
-        .on('finish', () => {
-            serverQueue.songs.shift();
-            playSong(serverQueue, serverQueue.songs[0]);
+async function getSong(message, player, query): Promise<any> {
+    const searchResult = await player
+        .search(query, {
+            requestedBy: message.author.username,
+            searchEngine: QueryType.AUTO,
         })
-        .on('error', (error) => console.error(error));
-    dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
-    serverQueue.dispatcher = dispatcher;
-    serverQueue.playing = true;
-    serverQueue.textChannel.send(`Start playing: **${song.title}**`);
+        .catch((exp) => {});
+
+    return searchResult;
+}
+
+async function playQueue(queue, channel) {
+    if (!queue.connected) await queue.connect(channel);
+    if (!queue.playing) await queue.play();
 }

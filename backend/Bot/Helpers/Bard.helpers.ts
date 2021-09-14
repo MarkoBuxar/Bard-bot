@@ -3,7 +3,7 @@ import { queue } from '../Bard';
 export function userConnectedToVC(message, voiceChannel) {
     if (!voiceChannel) {
         message.channel.send(
-            'You need to be in a voice channel to execute this command!'
+            '❌ |You need to be in a voice channel to execute this command!'
         );
         return false;
     }
@@ -12,7 +12,7 @@ export function userConnectedToVC(message, voiceChannel) {
     const permissions = voiceChannel.permissionsFor(message.client.user);
     if (!permissions.has('CONNECT') || !permissions.has('SPEAK')) {
         message.channel.send(
-            'I need the permissions to join and speak in your voice channel!'
+            '❌ | I need the permissions to join and speak in your voice channel!'
         );
         return false;
     }
@@ -20,27 +20,15 @@ export function userConnectedToVC(message, voiceChannel) {
     return true;
 }
 
-export function getQueue(message, guild) {
+export async function getQueue(message, player, guild) {
     const voiceChannel = message.member.voice.channel;
 
-    if (!queue.has(guild)) {
-        const queueContruct = {
-            guild: guild,
-            textChannel: message.channel,
-            voiceChannel: voiceChannel,
-            connection: null,
-            dispatcher: null,
-            songs: [],
-            volume: 5,
-            playing: false,
-        };
+    let queue = player.getQueue(guild);
 
-        queue.set(guild, queueContruct);
-    }
+    if (!queue)
+        queue = await player.createQueue(guild, { metadata: message.channel });
 
-    let serverQueue = queue.get(guild);
-
-    return serverQueue;
+    return queue;
 }
 
 export function resetQueue(serverQueue) {
