@@ -1,4 +1,4 @@
 {  "scripts": {
-    "start-bard": "cd backend && yarn && yarn start"
+    "start": "cd backend && yarn && yarn start"
   }
 }
