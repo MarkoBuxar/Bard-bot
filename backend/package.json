@@ -7,10 +7,6 @@
     "start": " yarn build && node ./index.js",
     "dev": "nodemon ./index.ts"
   },
-  "engines": {
-    "node": "16.9.1",
-    "yarn": "1.22.11"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",

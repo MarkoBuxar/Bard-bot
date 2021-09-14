@@ -16,3 +16,7 @@ Thumbs.db
 # Ignore built ts files
 dist
 dist/**/*
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

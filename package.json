@@ -1,4 +1,8 @@
 {  "scripts": {
     "start": "cd backend && yarn && yarn start"
+  },  
+  "engines": {
+    "node": "16.9.1",
+    "yarn": "1.22.11"
   }
 }
