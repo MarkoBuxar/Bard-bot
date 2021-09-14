@@ -3,7 +3,7 @@ import { queue } from '../Bard';
 export function userConnectedToVC(message, voiceChannel) {
     if (!voiceChannel) {
         message.channel.send(
-            '❌ |You need to be in a voice channel to execute this command!'
+            '❌ | You need to be in a voice channel to execute this command!'
         );
         return false;
     }
