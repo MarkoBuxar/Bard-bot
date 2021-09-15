@@ -9,6 +9,8 @@ export async function pause(instance, message, args) {
     const guild = message.guild.id;
     const serverQueue = await getQueue(message, player, guild);
 
-    serverQueue.setPaused(true);
-    player.emit('trackPaused', serverQueue);
+    if (!serverQueue.connection.paused) {
+        serverQueue.setPaused(true);
+        player.emit('trackPaused', serverQueue);
+    }
 }
