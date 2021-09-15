@@ -109,7 +109,7 @@ export class Bard {
                 {
                     url: playlist.url,
                     thumbnail: playlist.thumbnail,
-                    author: playlist.author.name,
+                    author: playlist.author.name.toString(),
                     fields: [
                         {
                             name: 'length',
