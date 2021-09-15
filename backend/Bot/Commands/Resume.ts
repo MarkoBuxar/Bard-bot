@@ -9,7 +9,8 @@ export async function resume(instance, message, args) {
     const guild = message.guild.id;
     const serverQueue = await getQueue(message, player, guild);
 
-    serverQueue.setPaused(false);
-    player.emit('trackResumed', serverQueue);
-    message.channel.send(`🎶 Music resumed!`);
+    if (serverQueue.connection.paused) {
+        serverQueue.setPaused(false);
+        player.emit('trackResumed', serverQueue);
+    }
 }

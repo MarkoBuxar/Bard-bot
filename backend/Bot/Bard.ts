@@ -2,6 +2,8 @@ import { Client, Intents } from 'discord.js';
 import { MessageInfo } from './Types/Bard.types';
 import { Commands } from './Commands';
 import { Player } from 'discord-player';
+import { createEmbed, getSongEmbed } from './Helpers/Bard.helpers';
+import { Themes } from './Themes/Themes';
 
 export let queue = new Map();
 
@@ -51,48 +53,121 @@ export class Bard {
 
         player.on('error', (queue, error) => {
             console.log(error);
-            queue.metadata.send('❌ | The bot has encountered an error');
+            const message = createEmbed(
+                '❌ The bot has encountered an error',
+                '',
+                { color: Themes.default.red }
+            );
+            queue.metadata.send({ embeds: [message] });
         });
 
         player.on('trackStart', (queue, track) => {
-            queue.metadata.send(
-                `🎶 | Started playing: **${track.title}** in **${queue.connection.channel.name}**!`
-            );
+            const message = getSongEmbed(track, ':musical_note:  Now playing', {
+                color: Themes.default.blue,
+            });
+            queue.metadata.send({ embeds: [message] });
         });
 
         player.on('trackPaused', (queue, track) => {
-            queue.metadata.send(`🎶 Music paused!`);
+            const message = createEmbed(':pause_button:  Music paused', '', {
+                color: Themes.default.blue,
+            });
+            queue.metadata.send({ embeds: [message] });
         });
-        player.on('trackResume', (queue, track) => {
-            queue.metadata.send(`🎶 Music resumed!`);
+        player.on('trackResumed', (queue, track) => {
+            const message = createEmbed(':arrow_forward:  Music resumed', '', {
+                color: Themes.default.blue,
+            });
+            queue.metadata.send({ embeds: [message] });
         });
 
         player.on('trackAdd', (queue, track) => {
-            queue.metadata.send(`🎶 | Track **${track.title}** queued!`);
+            const message = getSongEmbed(
+                track,
+                ':white_check_mark:  Song added to queue'
+            );
+            queue.metadata.send({ embeds: [message] });
+        });
+
+        player.on('tracksAdd', (queue, tracks) => {
+            const playlist = tracks[0].playlist;
+            let duration = 0;
+
+            for (let i in tracks) {
+                const a = tracks[i].duration.split(':');
+                const hh = a.length >= 3 ? a[0] : 0;
+                const mm = a.length < 3 ? a[0] : a[1];
+                const ss = a.length < 3 ? a[1] : a[2];
+
+                const seconds = +hh * 60 * 60 + +mm * 60 + +ss;
+                duration += seconds;
+            }
+
+            const message = createEmbed(
+                playlist.title,
+                ':white_check_mark:  Playlist added to queue',
+                {
+                    url: playlist.url,
+                    thumbnail: playlist.thumbnail,
+                    author: playlist.author.name,
+                    fields: [
+                        {
+                            name: 'length',
+                            value: playlist.tracks.length.toString(),
+                            inline: true,
+                        },
+                        {
+                            name: 'duration',
+                            value: new Date(duration * 1000)
+                                .toISOString()
+                                .substr(11, 8),
+                            inline: true,
+                        },
+                    ],
+                    color: Themes.default.green,
+                }
+            );
+            queue.metadata.send({ embeds: [message] });
         });
 
         player.on('botDisconnect', (queue) => {
-            queue.metadata.send(
-                '❌ | I was manually disconnected from the voice channel, clearing queue!'
+            const message = createEmbed(
+                ':headstone:  I was manually disconnected from the voice channel, clearing queue',
+                '',
+                {
+                    color: Themes.default.red,
+                }
             );
+            queue.metadata.send({ embeds: [message] });
         });
 
         player.on('missingQuery', (queue) => {
-            queue.metadata.send('❌ | No song specified');
+            const message = createEmbed('❌  No song specified', '', {
+                color: Themes.default.red,
+            });
+            queue.metadata.send({ embeds: [message] });
         });
 
         player.on('missingTrack', (queue) => {
-            queue.metadata.send('❌ | Song not found');
+            const message = createEmbed(':question:  Song not found', '', {
+                color: Themes.default.red,
+            });
+            queue.metadata.send({ embeds: message });
         });
 
         player.on('channelEmpty', (queue) => {
-            queue.metadata.send(
-                '❌ | Nobody is in the voice channel, leaving...'
+            const message = createEmbed(
+                '❌  Nobody is in the voice channel, leaving...',
+                '',
+                {
+                    color: Themes.default.red,
+                }
             );
+            queue.metadata.send({ embeds: message });
         });
 
         player.on('queueEnd', (queue) => {
-            queue.metadata.send('✅ | Queue finished!');
+            //queue.metadata.send('✅ | Queue finished!');
         });
     }
 
@@ -102,9 +177,12 @@ export class Bard {
         if (!msg) return;
 
         if (!(msg.command in Commands)) {
-            message.channel.send(
-                `**Unknown command:** ${this.prefix}${msg.command}`
+            const embed = createEmbed(
+                ':question:  unknown command',
+                `${this.prefix}${msg.command}`,
+                { color: '#c2081a' }
             );
+            message.channel.send({ embeds: [embed] });
             return;
         }
 

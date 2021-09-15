@@ -7,6 +7,9 @@ import { ServerAPI } from './server/ServerAPI';
 // not playing random songs
 // https://github.com/Androz2091/discord-player/issues/764
 
+// todo: fix multiple servers
+// 0 views on songs in a playlist
+
 dotenv.config();
 
 const token: string | undefined = process.env.TOKEN;
