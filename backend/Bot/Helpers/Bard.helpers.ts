@@ -101,3 +101,21 @@ export function getSongEmbed(track, description, options: any = {}) {
 
     return message;
 }
+
+export function splitEmbed(description) {
+    var len = 3000;
+    var curr = len;
+    var prev = 0;
+
+    let output: string[] = [];
+
+    while (description[curr]) {
+        if (description[curr++] == ' ' || description[curr++] == '\n') {
+            output.push(description.substring(prev, curr));
+            prev = curr;
+            curr += len;
+        }
+    }
+    output.push(description.substr(prev));
+    return output;
+}

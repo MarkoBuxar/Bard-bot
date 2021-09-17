@@ -4,12 +4,14 @@ import { Commands } from './Commands';
 import { Player } from 'discord-player';
 import { createEmbed, getSongEmbed } from './Helpers/Bard.helpers';
 import { Themes } from './Themes/Themes';
+import { Lyrics } from '@discord-player/extractor';
 
 export let queue = new Map();
 
 export class Bard {
     client: any;
     player: any;
+    lyrics: any;
     config: any;
     prefix: string;
     _instance: Bard;
@@ -22,6 +24,8 @@ export class Bard {
 
         this.client = new Client(options);
         this.client.login(process.env.TOKEN);
+
+        this.lyrics = Lyrics.init(process.env.GENIUS_API_KEY);
 
         this.player = new Player(this.client);
 
@@ -172,21 +176,26 @@ export class Bard {
     }
 
     private handleMessage(message) {
-        const msg = this.parseMessage(message);
+        try {
+            const msg = this.parseMessage(message);
 
-        if (!msg) return;
+            if (!msg) return;
 
-        if (!(msg.command in Commands)) {
-            const embed = createEmbed(
-                ':question:  unknown command',
-                `${this.prefix}${msg.command}`,
-                { color: '#c2081a' }
-            );
-            message.channel.send({ embeds: [embed] });
-            return;
+            if (!(msg.command in Commands)) {
+                const embed = createEmbed(
+                    ':question:  unknown command',
+                    `${this.prefix}${msg.command}`,
+                    { color: '#c2081a' }
+                );
+                message.channel.send({ embeds: [embed] });
+                return;
+            }
+
+            Commands[msg.command](this._instance, message, msg.arguments);
+        } catch (err) {
+            console.log('err');
+            this.player.emit('error');
         }
-
-        Commands[msg.command](this._instance, message, msg.arguments);
     }
 
     private parseMessage(message): MessageInfo | undefined {

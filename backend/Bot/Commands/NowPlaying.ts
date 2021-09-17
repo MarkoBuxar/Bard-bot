@@ -24,8 +24,10 @@ export async function nowplaying(instance, message, args) {
         return;
     }
 
-    const currentTrack =
-        serverQueue.previousTracks[serverQueue.previousTracks.length - 1];
+    // const currentTrack =
+    //     serverQueue.previousTracks[serverQueue.previousTracks.length - 1];
+
+    const currentTrack = serverQueue.nowPlaying();
 
     const embed = getSongEmbed(currentTrack, ':musical_note: Now playing', {
         color: Themes.default.blue,
