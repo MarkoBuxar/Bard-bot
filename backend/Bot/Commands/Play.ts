@@ -3,18 +3,15 @@ import { getQueue, userConnectedToVC } from '../Helpers/Bard.helpers';
 import { Queue, SongObject } from '../Types/Bard.types';
 
 export async function play(instance, message, args) {
+    const voiceChannel = message.member.voice.channel;
+    const player = instance.player;
+    const guild = message.guild.id;
+    const serverQueue = await getQueue(message, player, guild);
+    const query = args.join(' ');
+
     try {
-        const voiceChannel = message.member.voice.channel;
-        const player = instance.player;
-
-        if (!userConnectedToVC(message, voiceChannel)) return;
-
-        const query = args.join(' ');
-        const guild = message.guild.id;
-
-        let serverQueue = await getQueue(message, player, guild);
-
         if (!query) return player.emit('missingQuery', serverQueue);
+        if (!userConnectedToVC(message, voiceChannel)) return;
 
         const song = await getSong(message, player, query);
 
@@ -24,9 +21,8 @@ export async function play(instance, message, args) {
         await addToQueue(message, serverQueue, song);
 
         if (!serverQueue.playing) playQueue(serverQueue, voiceChannel);
-        return;
     } catch (err) {
-        console.log(err);
+        player.emit('error', serverQueue, err);
     }
 }
 
