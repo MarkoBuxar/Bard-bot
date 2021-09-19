@@ -1,72 +1,58 @@
-import { Lyrics } from '@discord-player/extractor';
 import {
     createEmbed,
     getQueue,
+    songPlaying,
     splitEmbed,
     userConnectedToVC,
 } from '../Helpers/Bard.helpers';
+import axios from 'axios';
 import { Themes } from '../Themes/Themes';
 
 export async function lyrics(instance, message, args) {
     const voiceChannel = message.member.voice.channel;
     const player = instance.player;
-    const lyricsClient = instance.lyrics;
-
-    if (!userConnectedToVC(message, voiceChannel)) return;
-
     const guild = message.guild.id;
     const serverQueue = await getQueue(message, player, guild);
 
-    if (!serverQueue || !serverQueue.playing) {
-        const embed = createEmbed(
-            'Not playing',
-            'No song is currently being played',
-            { color: Themes.default.red }
-        );
-        return message.channel.send({ embeds: [embed] });
-    }
+    try {
+        if (!userConnectedToVC(message, voiceChannel)) return;
+        if (!songPlaying(message, serverQueue)) return;
 
-    const song = serverQueue.nowPlaying().title;
+        // todo: isolate song
+        const song = serverQueue.nowPlaying();
 
-    const lyrics = await lyricsClient.search(song);
+        const songLyrics = (
+            await axios.get(
+                encodeURI(
+                    `https://some-random-api.ml/lyrics/?title=${song.title}`
+                )
+            )
+        ).data;
 
-    if (!lyrics) {
-        const embed = createEmbed(
-            ':question: No lyrics found for current song',
-            '',
-            {
-                color: Themes.default.red,
-            }
-        );
-        return message.channel.send({ embeds: [embed] });
-    }
+        const lyricsArr = splitEmbed(songLyrics.lyrics);
 
-    let descArr;
-    if (lyrics.lyrics.length >= 6000) {
-        descArr = splitEmbed(lyrics.lyrics);
-    } else {
-        descArr = [lyrics.lyrics];
-    }
-
-    const embed = createEmbed(lyrics.title, descArr[0], {
-        thumbnail: lyrics.image,
-        author: lyrics.artist.name,
-        color: Themes.default.blue,
-        url: lyrics.url,
-    });
-
-    message.channel.send({ embeds: [embed] });
-
-    if (descArr.length > 1) {
-        message.channel.send({
-            embeds: [
-                createEmbed(lyrics.title, '...', {
-                    thumbnail: lyrics.image,
-                    author: lyrics.artist.name,
-                    color: Themes.default.blue,
-                    url: lyrics.url,
-                }),
-            ],
+        let embed = createEmbed(songLyrics.title, lyricsArr[0], {
+            url: songLyrics.links.genius,
+            thumbnail: songLyrics.thumbnail.genius,
+            author: songLyrics.author,
         });
+
+        message.channel.send({ embeds: [embed] });
+
+        // code
+    } catch (err: any) {
+        if (err.response.status === 404) {
+            return message.channel.send({
+                embeds: [
+                    createEmbed(
+                        'Not found',
+                        "Couldn't find lyrics for this song",
+                        { color: Themes.default.red }
+                    ),
+                ],
+            });
+        }
+
+        player.emit('error', serverQueue, err);
     }
 }

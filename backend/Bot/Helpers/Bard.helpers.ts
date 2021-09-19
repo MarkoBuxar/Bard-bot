@@ -4,21 +4,42 @@ import { Themes } from '../Themes/Themes';
 
 export function userConnectedToVC(message, voiceChannel) {
     if (!voiceChannel) {
-        message.channel.send(
-            '❌ | You need to be in a voice channel to execute this command!'
+        const embed = createEmbed(
+            '❌ You need to be in a voice channel to execute this command',
+            '',
+            { color: Themes.default.red }
         );
+
+        message.channel.send({ embeds: [embed] });
         return false;
     }
 
     //TODO: test
     const permissions = voiceChannel.permissionsFor(message.client.user);
     if (!permissions.has('CONNECT') || !permissions.has('SPEAK')) {
-        message.channel.send(
-            '❌ | I need the permissions to join and speak in your voice channel!'
+        const embed = createEmbed(
+            '❌ I need the permissions to join and speak in your voice channel',
+            '',
+            { color: Themes.default.red }
         );
+
+        message.channel.send({ embeds: [embed] });
         return false;
     }
 
+    return true;
+}
+
+export function songPlaying(message, serverQueue) {
+    if (!serverQueue || !serverQueue.playing) {
+        const embed = createEmbed(
+            'Not playing',
+            'No song is currently being played',
+            { color: Themes.default.red }
+        );
+        message.channel.send({ embeds: [embed] });
+        return false;
+    }
     return true;
 }
 
@@ -111,11 +132,15 @@ export function splitEmbed(description) {
 
     while (description[curr]) {
         if (description[curr++] == ' ' || description[curr++] == '\n') {
-            output.push(description.substring(prev, curr));
+            output.push(description.substring(prev, curr) + '...');
             prev = curr;
             curr += len;
         }
     }
     output.push(description.substr(prev));
+
+    var last = output[output.length - 1];
+
+    last = last.substring(0, last.length - 3);
     return output;
 }
