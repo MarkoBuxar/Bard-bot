@@ -1,4 +1,4 @@
-import { Client, Intents } from 'discord.js';
+import { Client } from 'discord.js';
 import { MessageInfo } from './Types/Bard.types';
 import { Commands } from './Commands';
 import { Player } from 'discord-player';

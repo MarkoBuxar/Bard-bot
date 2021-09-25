@@ -1,3 +1,4 @@
+global.AbortController = require('abort-controller');
 import config from 'config';
 import { Intents } from 'discord.js';
 import dotenv from 'dotenv';
